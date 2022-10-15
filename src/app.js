@@ -10,6 +10,7 @@ import {
   rgbToHex,
   hexToRgb,
 } from './helpers';
+import { FrontSide } from 'three';
 
 const {
   Scene,
@@ -117,7 +118,7 @@ class App {
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.defaultContactMaterial.contactEquationStiffness = 5e7;
     this.world.defaultContactMaterial.contactEquationRelaxation = 4;
-    // this.world.allowSleep = true;
+    this.world.allowSleep = true;
 
     this.cannonDebugRenderer = new CannonDebugger(this.scene, this.world, {
       scale: 1
@@ -157,8 +158,9 @@ class App {
       propeller: null,
       material: new MeshStandardMaterial({
         color: this.colors.propeller,
-        metalness: .1,
-        roughness: .1,
+        metalness: 0,
+        emissive: 0x0,
+        roughness: 1,
       }),
       sphereBaseMaterial: new THREE.MeshPhysicalMaterial({ color: "#ff00ff" }),
       sphereLeftSideMaterial: new THREE.MeshPhysicalMaterial({
@@ -259,9 +261,9 @@ class App {
 
   addDirectionalLight() {
     const target = new Object3D();
-    this.directionalLight = new DirectionalLight(this.colors.directionalLight, 1);
+    this.directionalLight = new DirectionalLight(this.colors.directionalLight, .5);
     this.directionalLight.castShadow = true;
-    this.directionalLight.position.set(0, 100, 50);
+    this.directionalLight.position.set(0, 250, 0);
     this.directionalLight.target = target;
 
     this.directionalLight.shadow.camera.needsUpdate = true;
@@ -278,12 +280,12 @@ class App {
     this.scene.add(this.directionalLight);
   }
 
-  createShape() {
-    const size = 15;
+  createShape(size) {
     const vectors = [
       new Vector2(-size, size),
       new Vector2(-size, -size),
       new Vector2(size, -size),
+      new Vector2(size, size),
       new Vector2(size, size)
     ];
 
@@ -299,13 +301,13 @@ class App {
     holePath.moveTo(x, z);
     holePath.ellipse(x, z, radius, radius, 0, Math.PI * 2);
 
-    holePath.autoClose = true;
+    // holePath.autoClose = true;
 
     shape.holes.push(holePath);
   }
 
   addBox() {
-    const floorShape = this.createShape();
+    const floorShape = this.createShape(15);
 
     this.createHole(floorShape, 0, 0);
 
@@ -319,14 +321,53 @@ class App {
       curveSegments: 32,
     });
 
-    const m = new MeshStandardMaterial({
-      color: '#ff00ff',
-      metalness: .5,
+    const material = new MeshPhysicalMaterial({
+      color: '#333333',
+      side: FrontSide,
+      metalness: 0,
       emissive: 0x0,
       roughness: .5,
     });
+    material.clearcoatRoughness = 0;
+    material.clearcoat = 1;
+    material.reflectivity = 1;
+    material.aoMapIntensity = 0.5;
+    material.displacementScale = 0;
+    material.displacementBias = 0;
+    material.normalScale = new THREE.Vector2(1, 1);
 
-    const mesh = new Mesh(geometry, m);
+    material.aoMap = new THREE.TextureLoader().load(
+      "/assets/painted_concrete/ao.jpg"
+    );
+    material.displacementMap = new THREE.TextureLoader().load(
+      "/assets/painted_concrete/disp.jpg"
+    );
+    material.roughnessMap = new THREE.TextureLoader().load(
+      "/assets/painted_concrete/rough.jpg"
+    );
+    material.normalMap = new THREE.TextureLoader().load(
+      "/assets/painted_concrete/norm.jpg"
+    );
+    material.map = new THREE.TextureLoader().load(
+      '/assets/painted_concrete/diff.jpg'
+    );
+
+    material.map.wrapS = THREE.MirroredRepeatWrapping;
+    material.map.wrapT = THREE.MirroredRepeatWrapping;
+    material.map.repeat.x = .05;
+    material.map.repeat.y = .05;
+
+    material.normalMap.wrapS = THREE.MirroredRepeatWrapping;
+    material.normalMap.wrapT = THREE.MirroredRepeatWrapping;
+    material.normalMap.repeat.x = .05;
+    material.normalMap.repeat.y = .05;
+
+    material.roughnessMap.wrapS = THREE.MirroredRepeatWrapping;
+    material.roughnessMap.wrapT = THREE.MirroredRepeatWrapping;
+    material.roughnessMap.repeat.x = .05;
+    material.roughnessMap.repeat.y = .05;
+
+    const mesh = new Mesh(geometry, material);
     mesh.needsUpdate = true;
     mesh.receiveShadow = true;
     mesh.rotation.set(Math.PI * 0.5, 0, 0);
@@ -346,7 +387,42 @@ class App {
 
   addFloor() {
     const geometry = new PlaneGeometry(100, 100);
-    const material = new MeshPhysicalMaterial({ color: this.colors.floor, side: DoubleSide });
+    const material = new MeshPhysicalMaterial({
+      color: '#fffffff',
+      side: DoubleSide,
+      metalness: .5,
+      emissive: 0x0,
+      roughness: .5,
+    });
+
+    material.clearcoatRoughness = 0;
+    material.clearcoat = 0;
+    material.reflectivity = 1;
+    material.aoMapIntensity = 0.5;
+    material.displacementScale = 0;
+    material.displacementBias = 0;
+    material.normalScale = new THREE.Vector2(1, 1);
+
+    // material.aoMap = new THREE.TextureLoader().load(
+    //   "/assets/painted_concrete/ao.jpg"
+    // );
+    // material.displacementMap = new THREE.TextureLoader().load(
+    //   "/assets/painted_concrete/disp.jpg"
+    // );
+    // material.roughnessMap = new THREE.TextureLoader().load(
+    //   "/assets/painted_concrete/rough.jpg"
+    // );
+    // material.normalMap = new THREE.TextureLoader().load(
+    //   "/assets/painted_concrete/norm.jpg"
+    // );
+    // material.map = new THREE.TextureLoader().load(
+    //   "/assets/painted_concrete/diff.jpg"
+    // );
+
+    // material.map.wrapS = THREE.RepeatWrapping;
+    // material.map.wrapT = THREE.RepeatWrapping;
+    // material.map.repeat.x = .5;
+    // material.map.repeat.y = .5;
 
     this.floor = new Mesh(geometry, material);
     this.floor.position.y = -.01;
@@ -400,7 +476,7 @@ class App {
     setTimeout(() => {
       this.world.addBody(this.celing.body);
 
-      for (let index = 0; index < 100; index++) {
+      for (let index = 0; index < 150; index++) {
         const a = Math.random() / 2 * Math.PI;
         const r = 1 * Math.sqrt(Math.random())
         const x = r * Math.sin(a);
@@ -420,7 +496,7 @@ class App {
 
     const materials = [
       new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 0, alphaTest: 1 }),
-      new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 0, alphaTest: 1}),
+      new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 0, alphaTest: 1 }),
       new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 0, alphaTest: 1 }),
       new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 0, alphaTest: 1 }),
       new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 1, alphaTest: 1 }),
@@ -489,7 +565,7 @@ class App {
     this.scene.add(circle);
 
     this.ringMesh.instanceMatrix.needsUpdate = false;
-    this.scene.add(this.ringMesh);
+    // this.scene.add(this.ringMesh);
   }
 
   onMouseMove({ clientX, clientY }) {
