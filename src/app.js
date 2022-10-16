@@ -53,7 +53,6 @@ class App {
     this.addPointLight();
     this.addPointerDebugger();
     this.addFloor();
-    this.addFloorGrid();
     this.addBox();
     this.addPropeller();
     this.addInnerBoudaries();
@@ -94,20 +93,10 @@ class App {
       this.meshes.sphereRightSideMaterial.color = hexToRgb(evt.value);
     });
 
-    this.guiSettings.addInput(this.colors, "displayGrid").on("change", (evt) => {
-      if (evt.value) {
-        this.scene.add(this.grid);
-      } else {
-        this.scene.remove(this.grid);
-      };
-    });
-
     this.guiSettings.addInput(this.colors, "box").on("change", (evt) => {
-      console.log((evt.value, hexToRgb(evt.value)));
-
-      this.meshes.box.material.color = hexToRgb(evt.value);
-
-      console.log(this.meshes.box.material.color);
+      this.meshes.box.material[0].color = hexToRgb(evt.value);
+      this.meshes.box.material[1].color = hexToRgb(evt.value);
+      this.meshes.box.floor.material.color = hexToRgb(evt.value);
     });
 
     // control lights
@@ -168,14 +157,13 @@ class App {
     this.colors = {
       background: rgbToHex(window.getComputedStyle(document.body).backgroundColor),
       floor: rgbToHex(window.getComputedStyle(document.body).backgroundColor),
-      box: '#ffffff',
+      box: '#ff0f40',
       leftSideSphere: '#ff0f40',
       rightSideSphere: '#ffffff',
       ambientLight: '#ffffff',
       directionalLight: '#ffffff',
       ring: '#ff00ff',
-      propeller: '#0ff0ff',
-      displayGrid: true,
+      propeller: '#ffffff',
     };
 
     this.sphereConfig = {
@@ -256,12 +244,8 @@ class App {
     this.orbitControl = new OrbitControls(this.camera, this.renderer.domElement);
     this.orbitControl.enableDamping = true;
     this.orbitControl.dampingFactor = 0.02;
-    // this.orbitControl.maxDistance = 60;
-    // this.orbitControl.minDistance = 30;
     this.orbitControl.minPolarAngle = THREE.MathUtils.degToRad(0);
     this.orbitControl.maxPolarAngle = THREE.MathUtils.degToRad(70);
-    // this.orbitControl.minAzimuthAngle = THREE.MathUtils.degToRad(-90);
-    // this.orbitControl.maxAzimuthAngle = THREE.MathUtils.degToRad(90);
     this.orbitControl.enablePan = !this.cameraAutoAnimate;
     this.orbitControl.enableRotate = !this.cameraAutoAnimate;
     this.orbitControl.enableZoom = !this.cameraAutoAnimate;
@@ -295,7 +279,7 @@ class App {
     const target = new Object3D();
     this.directionalLight = new DirectionalLight(this.colors.directionalLight, 1);
     this.directionalLight.castShadow = true;
-    this.directionalLight.position.set(0, 7, -2);
+    this.directionalLight.position.set(0, 2, -2);
     this.directionalLight.target = target;
 
     this.directionalLight.shadow.camera.needsUpdate = true;
@@ -332,15 +316,13 @@ class App {
 
     holePath.moveTo(x, z);
     holePath.ellipse(x, z, radius, radius, 0, Math.PI * 2);
-
-    // holePath.autoClose = true;
+    holePath.autoClose = true;
 
     shape.holes.push(holePath);
   }
 
   addBox() {
     const floorShape = this.createShape(15);
-
     this.createHole(floorShape, 0, 0);
 
     const geometry = new ExtrudeGeometry(floorShape, {
@@ -350,58 +332,12 @@ class App {
       steps: 0,
       bevelSize: 0,
       bevelThickness: .5,
-      curveSegments: 32,
+      curveSegments: 64,
     });
-
-    const material = new MeshPhysicalMaterial({
-      color: '#333333',
-      side: FrontSide,
-      metalness: 0,
-      emissive: 0x0,
-      roughness: .5,
-    });
-    material.clearcoatRoughness = 0;
-    material.clearcoat = 1;
-    material.reflectivity = 1;
-    material.aoMapIntensity = 0.5;
-    material.displacementScale = 0;
-    material.displacementBias = 0;
-    material.normalScale = new THREE.Vector2(1, 1);
-
-    // material.aoMap = new THREE.TextureLoader().load(
-    //   "/assets/painted_concrete/ao.jpg"
-    // );
-    // material.displacementMap = new THREE.TextureLoader().load(
-    //   "/assets/painted_concrete/disp.jpg"
-    // );
-    // material.roughnessMap = new THREE.TextureLoader().load(
-    //   "/assets/painted_concrete/rough.jpg"
-    // );
-    // material.normalMap = new THREE.TextureLoader().load(
-    //   "/assets/painted_concrete/norm.jpg"
-    // );
-    // material.map = new THREE.TextureLoader().load(
-    //   '/assets/painted_concrete/diff.jpg'
-    // );
-
-    // material.map.wrapS = THREE.MirroredRepeatWrapping;
-    // material.map.wrapT = THREE.MirroredRepeatWrapping;
-    // material.map.repeat.x = .05;
-    // material.map.repeat.y = .05;
-
-    // material.normalMap.wrapS = THREE.MirroredRepeatWrapping;
-    // material.normalMap.wrapT = THREE.MirroredRepeatWrapping;
-    // material.normalMap.repeat.x = .05;
-    // material.normalMap.repeat.y = .05;
-
-    // material.roughnessMap.wrapS = THREE.MirroredRepeatWrapping;
-    // material.roughnessMap.wrapT = THREE.MirroredRepeatWrapping;
-    // material.roughnessMap.repeat.x = .05;
-    // material.roughnessMap.repeat.y = .05;
 
     const materials = [
-      new MeshStandardMaterial({ color: '#000fff', side: DoubleSide, opacity: 1, alphaTest: 1 }),
-      new MeshStandardMaterial({ color: '#ff00ff', side: DoubleSide, opacity: 1, alphaTest: 1 }),
+      new MeshStandardMaterial({ color: this.colors.box, side: DoubleSide, opacity: 1, alphaTest: 1 }),
+      new MeshStandardMaterial({ color: this.colors.box, side: DoubleSide, opacity: 1, alphaTest: 1 }),
     ];
 
     const mesh = new Mesh(geometry, materials);
@@ -410,57 +346,32 @@ class App {
     mesh.rotation.set(Math.PI * 0.5, 0, 0);
     mesh.position.set(0, .5, 0);
 
+    const geometryfloor = new THREE.CircleGeometry(3.1, 32);
+    const circle = new THREE.Mesh(geometryfloor, new MeshStandardMaterial({
+      color: this.colors.box,
+      side: DoubleSide,
+      opacity: .5,
+      alphaTest: 1
+    }));
+    circle.receiveShadow = true;
+    circle.rotateX(-Math.PI / 2);
+    circle.position.set(0, 0.01, 0);
+    this.scene.add(circle);
+
     this.meshes.box = mesh;
+    this.meshes.box.floor = circle;
     this.scene.add(mesh);
-  }
-
-  addFloorGrid() {
-    const size = 10;
-    const divisions = 10;
-    this.grid = new GridHelper(size, divisions, '#ffffff', '#ffffff');
-    this.grid.position.set(0, 0, 0);
-
-    this.scene.add(this.grid);
   }
 
   addFloor() {
     const geometry = new PlaneGeometry(100, 100);
     const material = new MeshPhysicalMaterial({
-      color: '#fffffff',
+      color: this.colors.background,
       side: DoubleSide,
       metalness: .5,
       emissive: 0x0,
       roughness: .5,
     });
-
-    material.clearcoatRoughness = 0;
-    material.clearcoat = 0;
-    material.reflectivity = 1;
-    material.aoMapIntensity = 0.5;
-    material.displacementScale = 0;
-    material.displacementBias = 0;
-    material.normalScale = new THREE.Vector2(1, 1);
-
-    // material.aoMap = new THREE.TextureLoader().load(
-    //   "/assets/painted_concrete/ao.jpg"
-    // );
-    // material.displacementMap = new THREE.TextureLoader().load(
-    //   "/assets/painted_concrete/disp.jpg"
-    // );
-    // material.roughnessMap = new THREE.TextureLoader().load(
-    //   "/assets/painted_concrete/rough.jpg"
-    // );
-    // material.normalMap = new THREE.TextureLoader().load(
-    //   "/assets/painted_concrete/norm.jpg"
-    // );
-    // material.map = new THREE.TextureLoader().load(
-    //   "/assets/painted_concrete/diff.jpg"
-    // );
-
-    // material.map.wrapS = THREE.RepeatWrapping;
-    // material.map.wrapT = THREE.RepeatWrapping;
-    // material.map.repeat.x = .5;
-    // material.map.repeat.y = .5;
 
     this.floor = new Mesh(geometry, material);
     this.floor.position.y = -.01;
@@ -478,18 +389,6 @@ class App {
 
     this.floor.body.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), MathUtils.degToRad(-90));
     this.world.addBody(this.floor.body);
-    this.scene.add(this.floor);
-
-    // this.floor.body1 = new CANNON.Body({
-    //   mass: 0,
-    //   position: new CANNON.Vec3(0, 2, 0),
-    //   material: new CANNON.Material(),
-    //   shape: new CANNON.Plane(2, 2, 2),
-    // });
-
-    // this.floor.body1.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), MathUtils.degToRad(-90));
-    // this.world.addBody(this.floor.body1);
-
     this.scene.add(this.floor);
   }
 
@@ -514,7 +413,7 @@ class App {
     setTimeout(() => {
       this.world.addBody(this.celing.body);
 
-      for (let index = 0; index < 150; index++) {
+      for (let index = 0; index < 50; index++) {
         const a = Math.random() / 2 * Math.PI;
         const r = 1 * Math.sqrt(Math.random())
         const x = r * Math.sin(a);
@@ -522,7 +421,6 @@ class App {
 
         this.addSpheres({ x, y: .3, z });
       }
-
     }, 0);
 
   }
@@ -545,7 +443,7 @@ class App {
       materials,
       count);
     this.ringMesh.instanceMatrix.setUsage(DynamicDrawUsage);
-    // this.ringMesh.castShadow = true;
+    this.ringMesh.castShadow = true;
 
     for (let index = 0; index < count; index++) {
       const mesh = new Mesh(geometry, this.ringMesh.material);
@@ -573,14 +471,7 @@ class App {
         position: new CANNON.Vec3(sin, height * .5, cos),
       });
 
-      // mesh.body.linearDamping = 1;
       mesh.body.material.name = "boudaries";
-      // mesh.body.force = new CANNON.Vec3(1, 1, 1);
-      // mesh.body.fixedRotation = true;
-      // mesh.body.collisionResponse = true;
-      // mesh.body.updateMassProperties();
-      // mesh.body.sleepSpeedLimit = 0;
-      // mesh.body.sleepTimeLimit = 0;
       mesh.body.quaternion.copy(mesh.quaternion);
 
       this.meshes.spheres.forEach(element => {
@@ -595,15 +486,8 @@ class App {
       this.world.addBody(mesh.body);
     }
 
-    const geometryfloor = new THREE.CircleGeometry(3, 32);
-    const circle = new THREE.Mesh(geometryfloor, this.meshes.propeller.material);
-    circle.receiveShadow = true;
-    circle.rotateX(-Math.PI / 2);
-    circle.position.set(0, 0.01, 0);
-    this.scene.add(circle);
-
     this.ringMesh.instanceMatrix.needsUpdate = false;
-    // this.scene.add(this.ringMesh);
+    this.scene.add(this.ringMesh);
   }
 
   onMouseMove({ clientX, clientY }) {
@@ -637,34 +521,6 @@ class App {
     this.scene.add(this.meshes.container);
     this.meshes.container.add(this.meshes.propeller);
 
-    mesh.material.clearcoatRoughness = 0;
-    mesh.material.clearcoat = 0;
-    mesh.material.reflectivity = 1;
-    mesh.material.aoMapIntensity = 0.5;
-    mesh.material.displacementScale = 0;
-    mesh.material.displacementBias = 0;
-    // mesh.material.aoMap = new THREE.TextureLoader().load(
-    //   "https://iondrimba.github.io/wood-toy/public/assets/plywood/ambientOcclusion.avif"
-    // );
-    // mesh.material.displacementMap = new THREE.TextureLoader().load(
-    //   "https://iondrimba.github.io/wood-toy/public/assets/plywood/height.png"
-    // );
-    // mesh.material.roughnessMap = new THREE.TextureLoader().load(
-    //   "https://iondrimba.github.io/wood-toy/public/assets/plywood/roughness.avif"
-    // );
-    // mesh.material.normalMap = new THREE.TextureLoader().load(
-    //   "https://iondrimba.github.io/wood-toy/public/assets/plywood/normal.avif"
-    // );
-    // mesh.material.map = new THREE.TextureLoader().load(
-    //   "https://iondrimba.github.io/wood-toy/public/assets/plywood/basecolor.avif"
-    // );
-
-    // mesh.material.normalScale = new THREE.Vector2(1, 0);
-    // mesh.material.map.wrapS = THREE.RepeatWrapping;
-    // mesh.material.map.wrapT = THREE.RepeatWrapping;
-    // mesh.material.map.repeat.x = 1;
-    // mesh.material.map.repeat.y = 0.1;
-
     // physics obstacle
     mesh.body = new CANNON.Body({
       mass: 0,
@@ -676,10 +532,11 @@ class App {
     this.world.addBody(mesh.body);
 
     const geometryC = new THREE.CylinderGeometry(.2, .2, 2, 32);
-    const material = new THREE.MeshStandardMaterial({ color: 0x00ffff });
+    const material = new THREE.MeshStandardMaterial({ color: this.colors.propeller });
     const cylinder = new THREE.Mesh(geometryC, material);
     cylinder.receiveShadow = true;
     cylinder.castShadow = true;
+
     this.meshes.container.add(cylinder);
 
     cylinder.body = new CANNON.Body({
