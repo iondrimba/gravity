@@ -101,6 +101,38 @@ class App {
         this.scene.remove(this.grid);
       };
     });
+
+    this.guiSettings.addInput(this.colors, "box").on("change", (evt) => {
+      console.log((evt.value, hexToRgb(evt.value)));
+
+      this.meshes.box.material.color = hexToRgb(evt.value);
+
+      console.log(this.meshes.box.material.color);
+    });
+
+    // control lights
+    this.guiSettings = this.pane.addFolder({
+      title: "Lights",
+      expanded: false
+    });
+
+    this.guiSettings
+      .addInput(this.directionalLight.position, "x", { min: -100, max: 100, step: 1 })
+      .on("change", ({ value }) => {
+        this.directionalLight.position.x = value;
+      });
+
+    this.guiSettings
+      .addInput(this.directionalLight.position, "y", { min: -100, max: 100, step: 1 })
+      .on("change", ({ value }) => {
+        this.directionalLight.position.y = value;
+      });
+
+    this.guiSettings
+      .addInput(this.directionalLight.position, "z", { min: -100, max: 100, step: 1 })
+      .on("change", ({ value }) => {
+        this.directionalLight.position.z = value;
+      });
   }
 
   addPointerDebugger() {
@@ -142,7 +174,7 @@ class App {
       ambientLight: '#ffffff',
       directionalLight: '#ffffff',
       ring: '#ff00ff',
-      propeller: '#faecec',
+      propeller: '#0ff0ff',
       displayGrid: true,
     };
 
@@ -261,9 +293,9 @@ class App {
 
   addDirectionalLight() {
     const target = new Object3D();
-    this.directionalLight = new DirectionalLight(this.colors.directionalLight, .5);
+    this.directionalLight = new DirectionalLight(this.colors.directionalLight, 1);
     this.directionalLight.castShadow = true;
-    this.directionalLight.position.set(0, 250, 0);
+    this.directionalLight.position.set(0, 7, -2);
     this.directionalLight.target = target;
 
     this.directionalLight.shadow.camera.needsUpdate = true;
@@ -336,43 +368,49 @@ class App {
     material.displacementBias = 0;
     material.normalScale = new THREE.Vector2(1, 1);
 
-    material.aoMap = new THREE.TextureLoader().load(
-      "/assets/painted_concrete/ao.jpg"
-    );
-    material.displacementMap = new THREE.TextureLoader().load(
-      "/assets/painted_concrete/disp.jpg"
-    );
-    material.roughnessMap = new THREE.TextureLoader().load(
-      "/assets/painted_concrete/rough.jpg"
-    );
-    material.normalMap = new THREE.TextureLoader().load(
-      "/assets/painted_concrete/norm.jpg"
-    );
-    material.map = new THREE.TextureLoader().load(
-      '/assets/painted_concrete/diff.jpg'
-    );
+    // material.aoMap = new THREE.TextureLoader().load(
+    //   "/assets/painted_concrete/ao.jpg"
+    // );
+    // material.displacementMap = new THREE.TextureLoader().load(
+    //   "/assets/painted_concrete/disp.jpg"
+    // );
+    // material.roughnessMap = new THREE.TextureLoader().load(
+    //   "/assets/painted_concrete/rough.jpg"
+    // );
+    // material.normalMap = new THREE.TextureLoader().load(
+    //   "/assets/painted_concrete/norm.jpg"
+    // );
+    // material.map = new THREE.TextureLoader().load(
+    //   '/assets/painted_concrete/diff.jpg'
+    // );
 
-    material.map.wrapS = THREE.MirroredRepeatWrapping;
-    material.map.wrapT = THREE.MirroredRepeatWrapping;
-    material.map.repeat.x = .05;
-    material.map.repeat.y = .05;
+    // material.map.wrapS = THREE.MirroredRepeatWrapping;
+    // material.map.wrapT = THREE.MirroredRepeatWrapping;
+    // material.map.repeat.x = .05;
+    // material.map.repeat.y = .05;
 
-    material.normalMap.wrapS = THREE.MirroredRepeatWrapping;
-    material.normalMap.wrapT = THREE.MirroredRepeatWrapping;
-    material.normalMap.repeat.x = .05;
-    material.normalMap.repeat.y = .05;
+    // material.normalMap.wrapS = THREE.MirroredRepeatWrapping;
+    // material.normalMap.wrapT = THREE.MirroredRepeatWrapping;
+    // material.normalMap.repeat.x = .05;
+    // material.normalMap.repeat.y = .05;
 
-    material.roughnessMap.wrapS = THREE.MirroredRepeatWrapping;
-    material.roughnessMap.wrapT = THREE.MirroredRepeatWrapping;
-    material.roughnessMap.repeat.x = .05;
-    material.roughnessMap.repeat.y = .05;
+    // material.roughnessMap.wrapS = THREE.MirroredRepeatWrapping;
+    // material.roughnessMap.wrapT = THREE.MirroredRepeatWrapping;
+    // material.roughnessMap.repeat.x = .05;
+    // material.roughnessMap.repeat.y = .05;
 
-    const mesh = new Mesh(geometry, material);
+    const materials = [
+      new MeshStandardMaterial({ color: '#000fff', side: DoubleSide, opacity: 1, alphaTest: 1 }),
+      new MeshStandardMaterial({ color: '#ff00ff', side: DoubleSide, opacity: 1, alphaTest: 1 }),
+    ];
+
+    const mesh = new Mesh(geometry, materials);
     mesh.needsUpdate = true;
     mesh.receiveShadow = true;
     mesh.rotation.set(Math.PI * 0.5, 0, 0);
     mesh.position.set(0, .5, 0);
 
+    this.meshes.box = mesh;
     this.scene.add(mesh);
   }
 
@@ -499,7 +537,7 @@ class App {
       new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 0, alphaTest: 1 }),
       new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 0, alphaTest: 1 }),
       new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 0, alphaTest: 1 }),
-      new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 1, alphaTest: 1 }),
+      new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 0, alphaTest: 1 }),
       new MeshStandardMaterial({ color: '#ffffff', side: DoubleSide, opacity: 0, alphaTest: 1 }),
     ];
 
@@ -507,7 +545,7 @@ class App {
       materials,
       count);
     this.ringMesh.instanceMatrix.setUsage(DynamicDrawUsage);
-    this.ringMesh.castShadow = true;
+    // this.ringMesh.castShadow = true;
 
     for (let index = 0; index < count; index++) {
       const mesh = new Mesh(geometry, this.ringMesh.material);
@@ -535,14 +573,14 @@ class App {
         position: new CANNON.Vec3(sin, height * .5, cos),
       });
 
-      mesh.body.linearDamping = 1;
+      // mesh.body.linearDamping = 1;
       mesh.body.material.name = "boudaries";
-      mesh.body.force = new CANNON.Vec3(1, 1, 1);
-      mesh.body.fixedRotation = true;
-      mesh.body.collisionResponse = true;
-      mesh.body.updateMassProperties();
-      mesh.body.sleepSpeedLimit = 0;
-      mesh.body.sleepTimeLimit = 0;
+      // mesh.body.force = new CANNON.Vec3(1, 1, 1);
+      // mesh.body.fixedRotation = true;
+      // mesh.body.collisionResponse = true;
+      // mesh.body.updateMassProperties();
+      // mesh.body.sleepSpeedLimit = 0;
+      // mesh.body.sleepTimeLimit = 0;
       mesh.body.quaternion.copy(mesh.quaternion);
 
       this.meshes.spheres.forEach(element => {
@@ -586,14 +624,18 @@ class App {
   }
 
   addPropeller() {
-    const width = 6, height = 1, depth = .2;
+    const width = 3, height = 1, depth = .2;
     const geometry = new BoxGeometry(width, height, depth);
 
     const mesh = new Mesh(geometry, this.meshes.material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    mesh.position.set(0, height * .5, 0);
+    mesh.position.set(1.5, height * .5, 0);
     this.meshes.propeller = mesh;
+
+    this.meshes.container = new Object3D();
+    this.scene.add(this.meshes.container);
+    this.meshes.container.add(this.meshes.propeller);
 
     mesh.material.clearcoatRoughness = 0;
     mesh.material.clearcoat = 0;
@@ -601,39 +643,54 @@ class App {
     mesh.material.aoMapIntensity = 0.5;
     mesh.material.displacementScale = 0;
     mesh.material.displacementBias = 0;
-    mesh.material.aoMap = new THREE.TextureLoader().load(
-      "https://iondrimba.github.io/wood-toy/public/assets/plywood/ambientOcclusion.avif"
-    );
-    mesh.material.displacementMap = new THREE.TextureLoader().load(
-      "https://iondrimba.github.io/wood-toy/public/assets/plywood/height.png"
-    );
-    mesh.material.roughnessMap = new THREE.TextureLoader().load(
-      "https://iondrimba.github.io/wood-toy/public/assets/plywood/roughness.avif"
-    );
-    mesh.material.normalMap = new THREE.TextureLoader().load(
-      "https://iondrimba.github.io/wood-toy/public/assets/plywood/normal.avif"
-    );
-    mesh.material.map = new THREE.TextureLoader().load(
-      "https://iondrimba.github.io/wood-toy/public/assets/plywood/basecolor.avif"
-    );
+    // mesh.material.aoMap = new THREE.TextureLoader().load(
+    //   "https://iondrimba.github.io/wood-toy/public/assets/plywood/ambientOcclusion.avif"
+    // );
+    // mesh.material.displacementMap = new THREE.TextureLoader().load(
+    //   "https://iondrimba.github.io/wood-toy/public/assets/plywood/height.png"
+    // );
+    // mesh.material.roughnessMap = new THREE.TextureLoader().load(
+    //   "https://iondrimba.github.io/wood-toy/public/assets/plywood/roughness.avif"
+    // );
+    // mesh.material.normalMap = new THREE.TextureLoader().load(
+    //   "https://iondrimba.github.io/wood-toy/public/assets/plywood/normal.avif"
+    // );
+    // mesh.material.map = new THREE.TextureLoader().load(
+    //   "https://iondrimba.github.io/wood-toy/public/assets/plywood/basecolor.avif"
+    // );
 
-    mesh.material.normalScale = new THREE.Vector2(1, 0);
-    mesh.material.map.wrapS = THREE.RepeatWrapping;
-    mesh.material.map.wrapT = THREE.RepeatWrapping;
-    mesh.material.map.repeat.x = 1;
-    mesh.material.map.repeat.y = 0.1;
+    // mesh.material.normalScale = new THREE.Vector2(1, 0);
+    // mesh.material.map.wrapS = THREE.RepeatWrapping;
+    // mesh.material.map.wrapT = THREE.RepeatWrapping;
+    // mesh.material.map.repeat.x = 1;
+    // mesh.material.map.repeat.y = 0.1;
 
     // physics obstacle
     mesh.body = new CANNON.Body({
       mass: 0,
       material: new CANNON.Material(),
       shape: new CANNON.Box(new CANNON.Vec3(width * .5, height * .5, .1)),
-      position: new CANNON.Vec3(0, height * .5, 0),
+      position: new CANNON.Vec3(1.5, height * .5, 0),
     });
 
     this.world.addBody(mesh.body);
 
-    this.scene.add(mesh);
+    const geometryC = new THREE.CylinderGeometry(.2, .2, 2, 32);
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ffff });
+    const cylinder = new THREE.Mesh(geometryC, material);
+    cylinder.receiveShadow = true;
+    cylinder.castShadow = true;
+    this.meshes.container.add(cylinder);
+
+    cylinder.body = new CANNON.Body({
+      mass: 0,
+      material: new CANNON.Material(),
+      shape: new CANNON.Cylinder(.2, .2, 2, 32),
+      position: new CANNON.Vec3(0, 0, 0),
+    });
+
+    this.world.addBody(cylinder.body);
+
   }
 
   addPointLight() {
@@ -731,7 +788,7 @@ class App {
     this.stats = new Stats();
     this.stats.showPanel(0);
 
-    document.body.appendChild(this.stats.dom);
+    document.body.querySelector('#stats').appendChild(this.stats.dom);
   }
 
   onResize() {
@@ -757,7 +814,7 @@ class App {
     this.stats.begin();
     this.orbitControl.update();
 
-    this.meshes.propeller.rotation.y -= this.velocity;
+    this.meshes.container.rotation.y -= this.velocity;
 
     this.debug && this.cannonDebugRenderer.update();
     this.meshes.spheres.forEach((s, index) => {
@@ -772,8 +829,14 @@ class App {
       }
     });
 
-    this.meshes.propeller.body.position.copy(this.meshes.propeller.position);
-    this.meshes.propeller.body.quaternion.copy(this.meshes.propeller.quaternion);
+    const objectsWorldPosition = new THREE.Vector3();
+    this.meshes.propeller.getWorldPosition(objectsWorldPosition);
+
+    const objectsWorldQuaternion = new THREE.Quaternion();
+    this.meshes.propeller.getWorldQuaternion(objectsWorldQuaternion);
+
+    this.meshes.propeller.body.position.copy(objectsWorldPosition);
+    this.meshes.propeller.body.quaternion.copy(objectsWorldQuaternion);
 
     this.world.fixedStep();
 
