@@ -113,7 +113,7 @@ class App {
 
   addPhysicsWorld() {
     this.world = new CANNON.World();
-    this.world.gravity.set(0, -10, 40);
+    this.world.gravity.set(0, -5, 20);
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.defaultContactMaterial.contactEquationStiffness = 5e7;
     this.world.defaultContactMaterial.contactEquationRelaxation = 3;
@@ -127,7 +127,7 @@ class App {
   }
 
   setup() {
-    this.velocity = .01;
+    this.velocity = .015;
     this.raycaster = new THREE.Raycaster();
     this.mouse3D = new THREE.Vector2();
     this.width = window.innerWidth;
@@ -147,7 +147,7 @@ class App {
     };
 
     this.sphereConfig = {
-      radius: .18,
+      radius: .15,
       width: 32,
       height: 32,
     }
@@ -176,7 +176,7 @@ class App {
         roughness: .2,
       }),
       sphereConfig: {
-        geometry: new THREE.SphereGeometry(this.sphereConfig.radius, this.sphereConfig.width, this.sphereConfig.height),
+        geometry: new THREE.SphereGeometry(this.sphereConfig.radius, 16, 16),
         halfsphere: new THREE.SphereGeometry(this.sphereConfig.radius, 16, 16, 0, 3.15),
       }
     };
@@ -306,13 +306,13 @@ class App {
     this.createHole(floorShape, 0, 0);
 
     const geometry = new THREE.ExtrudeGeometry(floorShape, {
-      depth: 0,
+      depth: 5,
       bevelEnabled: true,
       bevelSegments: 1,
       steps: 0,
       bevelSize: 0,
       bevelThickness: .5,
-      curveSegments: 32,
+      curveSegments: 64,
     });
 
     const materials = [
@@ -326,16 +326,16 @@ class App {
     mesh.rotation.set(Math.PI * 0.5, 0, 0);
     mesh.position.set(0, .5, 0);
 
-    const geometryfloor = new THREE.CircleGeometry(3.1, 32);
+    const geometryfloor = new THREE.CircleGeometry(4, 32);
     const circle = new THREE.Mesh(geometryfloor, new THREE.MeshStandardMaterial({
       color: this.colors.box,
       side: THREE.DoubleSide,
-      opacity: .5,
+      opacity: 0,
       alphaTest: 1
     }));
-    circle.receiveShadow = true;
+    circle.receiveShadow = false;
     circle.rotateX(-Math.PI / 2);
-    circle.position.set(0, 0.01, 0);
+    circle.position.set(0, 0, 0);
     this.scene.add(circle);
 
     this.meshes.box = mesh;
@@ -354,7 +354,7 @@ class App {
     });
 
     this.floor = new THREE.Mesh(geometry, material);
-    this.floor.position.y = -.01;
+    this.floor.position.y = 0;
     this.floor.position.z = 0;
     this.floor.rotateX(Math.PI / 2);
     this.floor.receiveShadow = true;
@@ -364,7 +364,7 @@ class App {
       mass: 0,
       position: new CANNON.Vec3(0, 0, 0),
       material: new CANNON.Material(),
-      shape: new CANNON.Plane(2, 2, 2),
+      shape: new CANNON.Plane(2, 1, 2),
     });
 
     this.floor.body.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), THREE.MathUtils.degToRad(-90));
@@ -393,7 +393,7 @@ class App {
     setTimeout(() => {
       this.world.addBody(this.celing.body);
 
-      for (let index = 1; index < 80; index++) {
+      for (let index = 1; index < 200; index++) {
         const a = Math.random() / 2 * Math.PI;
         const r = 2 * Math.sqrt(Math.random())
         const x = r * Math.sin(a - 3);
@@ -409,9 +409,9 @@ class App {
   addInnerBoudaries() {
     const width = .2, height = 1, depth = .05;
     const geometry = new THREE.BoxGeometry(width, height, depth);
-    const count = 100;
+    const count = 150;
 
-    this.ringMesh = new THREE.InstancedMesh(geometry, new THREE.MeshStandardMaterial({ color: '#ff0f40', side: THREE.DoubleSide, opacity: 0, alphaTest: 1 }), count);
+    this.ringMesh = new THREE.InstancedMesh(geometry, new THREE.MeshStandardMaterial({ color: '#ffffff', side: THREE.DoubleSide, opacity: 0, alphaTest: 1 }), count);
     this.ringMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.ringMesh.castShadow = true;
 
@@ -436,7 +436,7 @@ class App {
       // physics obstacle
       mesh.body = new CANNON.Body({
         mass: 0,
-        material: new CANNON.ContactMaterial({ friction: 0, restitution: 1 }),
+        material: new CANNON.Material(),
         shape: new CANNON.Box(new CANNON.Vec3(width * .5, height * .5, depth * .5)),
         position: new CANNON.Vec3(sin, height * .5, cos),
       });
@@ -478,13 +478,13 @@ class App {
   }
 
   addPropeller() {
-    const width = 3, height = 1, depth = .2;
+    const width = 3.05, height = 1, depth = .3;
     const geometry = new THREE.BoxGeometry(width, height, depth);
 
     const mesh = new THREE.Mesh(geometry, this.meshes.material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    mesh.position.set(1.45, height * .5, 0);
+    mesh.position.set(1.45, 0, 0);
     this.meshes.propeller = mesh;
 
     this.meshes.container = new THREE.Object3D();
@@ -495,8 +495,8 @@ class App {
     mesh.body = new CANNON.Body({
       mass: 0,
       type: CANNON.BODY_TYPES.KINEMATIC,
-      material: new CANNON.ContactMaterial({ friction: 1, restitution: 0}),
-      shape: new CANNON.Box(new CANNON.Vec3(width * .5, height * .5, depth * .8)),
+      material: new CANNON.ContactMaterial({ friction: 0, restitution: .5}),
+      shape: new CANNON.Box(new CANNON.Vec3(width * .5, height * .5, .1)),
       position: new CANNON.Vec3(mesh.position.x, mesh.position.y, mesh.position.z),
     });
 
@@ -513,18 +513,17 @@ class App {
     cylinder.body = new CANNON.Body({
       mass: 0,
       type: CANNON.BODY_TYPES.KINEMATIC,
-      material: new CANNON.Material({ friction: 1, restitution: 0}),
+      material: new CANNON.Material({ friction: .1, restitution: .5}),
       shape: new CANNON.Cylinder(.2, .2, 2, 32),
       position: new CANNON.Vec3(0, 0, 0),
     });
 
     this.world.addBody(cylinder.body);
-
   }
 
   addPointLight() {
     const pointLight = new THREE.PointLight(0xff00ff, .5);
-    pointLight.position.set(5, 3, 5);
+    pointLight.position.set(5, 5, 5);
     pointLight.castShadow = true;
 
     this.scene.add(pointLight);
@@ -558,8 +557,8 @@ class App {
 
       // physics mesh
       mesh.body = new CANNON.Body({
-        mass: 1,
-        material: new CANNON.ContactMaterial({ friction: .1, restitution: .9 }),
+        mass: 3,
+        material: new CANNON.Material(),
         shape: new CANNON.Sphere(this.sphereConfig.radius),
         position: new CANNON.Vec3(position.x, mesh.position.y, position.z),
         allowSleep: true,
@@ -574,8 +573,9 @@ class App {
       const matp = new CANNON.ContactMaterial(
         this.meshes.propeller.body.material,
         mesh.body.material,
-        { friction: 0, restitution: 1 }
+        { friction: 0, restitution: .3 }
       );
+
 
       this.world.addContactMaterial(matp);
 
@@ -589,6 +589,14 @@ class App {
         this.world.addContactMaterial(matp1);
       }
 
+      mesh.body.addEventListener('collide', (event) => {
+        if (event.body === this.meshes.propeller.body) {
+          mesh.body.applyImpulse(new CANNON.Vec3(-4,0,0));
+          // mesh.body.applyForce(new CANNON.Vec3(-4,0,0));
+          mesh.body.applyLocalForce(new CANNON.Vec3(80,0,0));
+          // mesh.body.applyTorque(new CANNON.Vec3(40,0,0));
+        }
+      })
 
       this.scene.add(mesh);
     }
