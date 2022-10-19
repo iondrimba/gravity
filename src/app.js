@@ -4,7 +4,6 @@ import * as CANNON from 'cannon-es';
 import CannonDebugger from 'cannon-es-debugger';
 import Stats from 'stats-js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import Tweakpane from 'tweakpane';
 
 import {
@@ -22,13 +21,14 @@ class App {
       colors: {
         background: rgbToHex(window.getComputedStyle(document.body).backgroundColor),
         floor: rgbToHex(window.getComputedStyle(document.body).backgroundColor),
-        box: '#ff0f40',
+        box: '#390fff',
         spheres: {
-          left: '#ff0f40',
+          left: '#390fff',
           right: '#ffffff',
         },
         ambientLight: '#ffffff',
         directionalLight: '#ffffff',
+        pointLight: '#390fff',
       },
     };
   }
@@ -42,85 +42,98 @@ class App {
     this.addDirectionalLight();
     this.addPhysicsWorld();
     this.addPointLight();
-    this.addPointerDebugger();
     this.addFloor();
     this.addBox();
     this.addPropeller();
     this.addInnerBoudaries();
-    this.addStatsMonitor();
     this.addWindowListeners();
     this.addGuiControls();
     this.addInitialSpheres();
+    this.addStatsMonitor();
     this.animate();
   }
 
   addGuiControls() {
     this.pane = new Tweakpane();
     this.guiSettings = this.pane.addFolder({
-      title: "Settings",
+      title: 'Colors',
       expanded: false
     });
-    this.guiSettings
-      .addInput({ debug: false }, 'debug')
-      .on("change", ({ value }) => {
-        this.settings.debug = value;
-        console.log(this.world);
-      });
 
-    this.guiSettings.addInput(this.settings.colors, "background").on("change", (evt) => {
+    this.guiSettings.addInput(this.settings.colors, 'background').on('change', (evt) => {
       this.floor.material.color = hexToRgb(evt.value);
       document.body.style.backgroundColor = evt.value;
       this.scene.background = new THREE.Color(evt.value);
     });
 
-    this.guiSettings.addInput(this.settings.colors.spheres, "left").on("change", (evt) => {
+    this.guiSettings.addInput(this.settings.colors.spheres, 'left').on('change', (evt) => {
       this.meshes.sphereLeftSideMaterial.color = hexToRgb(evt.value);
     });
 
-    this.guiSettings.addInput(this.settings.colors.spheres, "right").on("change", (evt) => {
+    this.guiSettings.addInput(this.settings.colors.spheres, 'right').on('change', (evt) => {
       this.meshes.sphereRightSideMaterial.color = hexToRgb(evt.value);
     });
 
-    this.guiSettings.addInput(this.settings.colors, "box").on("change", (evt) => {
-      this.meshes.box.material[0].color = hexToRgb(evt.value);
-      this.meshes.box.material[1].color = hexToRgb(evt.value);
-      this.meshes.box.floor.material.color = hexToRgb(evt.value);
+    this.guiSettings.addInput(this.settings.colors, 'box').on('change', (evt) => {
+      this.meshes.box.material.color = hexToRgb(evt.value);
     });
 
     // control lights
     this.guiSettings = this.pane.addFolder({
-      title: "Directional Light",
+      title: 'Directional Light',
       expanded: false
     });
 
     this.guiSettings
-      .addInput(this.directionalLight.position, "x", { min: -100, max: 100, step: .1 })
-      .on("change", ({ value }) => {
+      .addInput(this.directionalLight.position, 'x', { min: -100, max: 100, step: .1 })
+      .on('change', ({ value }) => {
         this.directionalLight.position.x = value;
       });
 
     this.guiSettings
-      .addInput(this.directionalLight.position, "y", { min: -100, max: 100, step: .1 })
-      .on("change", ({ value }) => {
+      .addInput(this.directionalLight.position, 'y', { min: -100, max: 100, step: .1 })
+      .on('change', ({ value }) => {
         this.directionalLight.position.y = value;
       });
 
     this.guiSettings
-      .addInput(this.directionalLight.position, "z", { min: -100, max: 100, step: .1 })
-      .on("change", ({ value }) => {
+      .addInput(this.directionalLight.position, 'z', { min: -100, max: 100, step: .1 })
+      .on('change', ({ value }) => {
         this.directionalLight.position.z = value;
       });
 
+    this.guiSettings.addInput(this.settings.colors, 'directionalLight').on('change', (evt) => {
+      this.directionalLight.color = hexToRgb(evt.value);
+    });
 
-  }
+    // control lights
+    this.guiSettings = this.pane.addFolder({
+      title: 'Point Light',
+      expanded: false
+    });
 
-  addPointerDebugger() {
-    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-    const geometry = new THREE.SphereGeometry(.01, 16, 16);
+    this.guiSettings
+      .addInput(this.pointLight.position, 'x', { min: -100, max: 100, step: .1 })
+      .on('change', ({ value }) => {
+        this.pointLight.position.x = value;
+      });
 
-    this.pointerDebugger = new THREE.Mesh(geometry, material);
+    this.guiSettings
+      .addInput(this.pointLight.position, 'y', { min: -100, max: 100, step: .1 })
+      .on('change', ({ value }) => {
+        this.pointLight.position.y = value;
+      });
 
-    this.scene.add(this.pointerDebugger);
+    this.guiSettings
+      .addInput(this.pointLight.position, 'z', { min: -100, max: 100, step: .1 })
+      .on('change', ({ value }) => {
+        this.pointLight.position.z = value;
+      });
+
+    this.guiSettings.addInput(this.settings.colors, 'pointLight').on('change', (evt) => {
+      this.pointLight.color = hexToRgb(evt.value);
+    });
+
   }
 
   addPhysicsWorld() {
@@ -131,7 +144,6 @@ class App {
     this.world.defaultContactMaterial.contactEquationRelaxation = 3;
     this.world.quatNormalizeFast = true;
     this.world.allowSleep = true;
-    // this.world.frictionGravity = new CANNON.Vec3(0,10,20);
 
     this.cannonDebugRenderer = new CannonDebugger(this.scene, this.world, {
       scale: 1,
@@ -147,7 +159,7 @@ class App {
 
     this.spheres = {
       materials: {
-        base: new THREE.MeshBasicMaterial({ color: "#ff00ff" }),
+        base: new THREE.MeshBasicMaterial({ color: '#ff00ff' }),
         left: new THREE.MeshPhysicalMaterial({
           color: this.settings.colors.spheres.left,
           metalness: .1,
@@ -173,7 +185,7 @@ class App {
         emissive: 0x0,
         roughness: 1,
       }),
-      sphereBaseMaterial: new THREE.MeshBasicMaterial({ color: "#ff00ff" }),
+      sphereBaseMaterial: new THREE.MeshBasicMaterial({ color: '#ff00ff' }),
       sphereLeftSideMaterial: new THREE.MeshPhysicalMaterial({
         color: this.settings.colors.spheres.left,
         metalness: .1,
@@ -191,24 +203,16 @@ class App {
         halfsphere: new THREE.SphereGeometry(this.sphereConfig.radius, 16, 16, 0, 3.15),
       }
     };
-
-    this.meshes.sphereLeftSideMaterial.clearcoatRoughness = 0;
-    this.meshes.sphereLeftSideMaterial.clearcoat = 0;
-    this.meshes.sphereLeftSideMaterial.reflectivity = 1;
-
-    this.meshes.sphereRightSideMaterial.clearcoatRoughness = 0;
-    this.meshes.sphereRightSideMaterial.clearcoat = 0;
-    this.meshes.sphereRightSideMaterial.reflectivity = 1;
   }
 
   createScene() {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(this.settings.colors.background);
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setSize(this.settings.width, this.settings.height);
-
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    this.renderer.setSize(this.settings.width, this.settings.height);
 
     document.body.appendChild(this.renderer.domElement);
   }
@@ -268,9 +272,17 @@ class App {
     this.directionalLight.shadow.camera.near = -100;
     this.directionalLight.shadow.camera.zoom = 1;
 
-    this.directionalLight.position.set(0, 2, -2);
+    this.directionalLight.position.set(2, 2, -2);
 
     this.scene.add(this.directionalLight);
+  }
+
+  addPointLight() {
+    this.pointLight = new THREE.PointLight(this.settings.colors.pointLight, .5);
+    this.pointLight.position.set(1.5, 4, -2.4);
+    this.pointLight.castShadow = true;
+
+    this.scene.add(this.pointLight);
   }
 
   createShape(size) {
@@ -297,11 +309,11 @@ class App {
   }
 
   addBox() {
-    const floorShape = this.createShape(15);
+    const shape = this.createShape(15);
 
-    this.createHole(floorShape);
+    this.createHole(shape);
 
-    const geometry = new THREE.ExtrudeGeometry(floorShape, {
+    const geometry = new THREE.ExtrudeGeometry(shape, {
       depth: 5,
       bevelEnabled: true,
       bevelSegments: 1,
@@ -371,7 +383,7 @@ class App {
     setTimeout(() => {
       this.world.addBody(this.celing.body);
 
-      for (let index = 1; index < 200; index++) {
+      for (let index = 0; index < 150; index++) {
         const a = Math.random() / 2 * Math.PI;
         const r = 2 * Math.sqrt(Math.random())
         const x = r * Math.sin(a - 3);
@@ -381,25 +393,26 @@ class App {
           this.addSpheres({ x, y: .3, z });
 
           clearTimeout(t);
-        }, index * 20)
+        }, (index+1) * 20)
       }
     }, 1000);
   }
 
   addInnerBoudaries() {
     const width = .2, height = 1, depth = .05;
-    const geometry = new THREE.BoxGeometry(width, height, depth);
     const count = 150;
+    const geometry = new THREE.BoxGeometry(width, height, depth);
+    const material = new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.DoubleSide, opacity: 0, alphaTest: 1 });
 
-    this.ringMesh = new THREE.InstancedMesh(geometry, new THREE.MeshStandardMaterial({ color: '#ffffff', side: THREE.DoubleSide, opacity: 0, alphaTest: 1 }), count);
+    this.ringMesh = new THREE.InstancedMesh(geometry, material, count);
     this.ringMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.ringMesh.castShadow = true;
 
     for (let index = 0; index < count; index++) {
-      const mesh = new THREE.Mesh(geometry, this.ringMesh.material);
-      mesh.needsUpdate = false;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
+      const innerWall = new THREE.Mesh(geometry, this.ringMesh.material);
+      innerWall.needsUpdate = false;
+      innerWall.castShadow = true;
+      innerWall.receiveShadow = true;
 
       const l = 360 / count;
       const pos = THREE.MathUtils.degToRad(l * index);
@@ -407,33 +420,33 @@ class App {
       const sin = Math.sin(pos) * distance;
       const cos = Math.cos(pos) * distance;
 
-      mesh.position.set(sin, height * .5, cos);
-      mesh.lookAt(0, height * .5, 0);
+      innerWall.position.set(sin, height * .5, cos);
+      innerWall.lookAt(0, height * .5, 0);
 
-      mesh.updateMatrix();
-      this.ringMesh.setMatrixAt(index, mesh.matrix);
+      innerWall.updateMatrix();
+      this.ringMesh.setMatrixAt(index, innerWall.matrix);
 
       // boundary physics body
-      mesh.body = new CANNON.Body({
+      innerWall.body = new CANNON.Body({
         mass: 0,
         material: new CANNON.Material(),
         shape: new CANNON.Box(new CANNON.Vec3(width * .5, height * .5, depth * .5)),
         position: new CANNON.Vec3(sin, height * .5, cos),
       });
 
-      mesh.body.material.name = 'boudaries';
-      mesh.body.quaternion.copy(mesh.quaternion);
+      innerWall.body.material.name = 'boudaries';
+      innerWall.body.quaternion.copy(innerWall.quaternion);
 
-      this.meshes.spheres.forEach(element => {
+      this.meshes.spheres.forEach(sphere => {
         const mat = new CANNON.ContactMaterial(
-          mesh.body.material,
-          element.body.material,
+          sphere.body.material,
+          innerWall.body.material,
           { friction: 0, restitution: 1 }
         );
         this.world.addContactMaterial(mat);
       });
 
-      this.world.addBody(mesh.body);
+      this.world.addBody(innerWall.body);
     }
 
     this.ringMesh.instanceMatrix.needsUpdate = false;
@@ -466,12 +479,11 @@ class App {
 
     this.world.addBody(mesh.body);
 
+    // propeller cylinder
     const geometryCylinder = new THREE.CylinderGeometry(.2, .2, 2, 32);
     const cylinder = new THREE.Mesh(geometryCylinder, this.meshes.material);
-
     cylinder.receiveShadow = true;
     cylinder.castShadow = true;
-
     this.meshes.container.add(cylinder);
 
     cylinder.body = new CANNON.Body({
@@ -485,13 +497,7 @@ class App {
     this.world.addBody(cylinder.body);
   }
 
-  addPointLight() {
-    const pointLight = new THREE.PointLight(0xff00ff, .5);
-    pointLight.position.set(5, 5, 5);
-    pointLight.castShadow = true;
 
-    this.scene.add(pointLight);
-  }
 
   addSpheres(position) {
     const mesh = new THREE.Mesh(
@@ -514,6 +520,7 @@ class App {
 
     const rightSide = new THREE.Mesh(this.meshes.sphereConfig.halfsphere, this.meshes.sphereRightSideMaterial);
     rightSide.rotation.y = THREE.MathUtils.degToRad(90);
+
     mesh.add(rightSide);
 
     mesh.position.set(position.x, position.y, position.z);
@@ -528,27 +535,26 @@ class App {
     });
 
     mesh.body.material.name = 'sphere.body';
-    mesh.body.fixedRotation = true;
 
     this.world.addBody(mesh.body);
 
-    const matp = new CANNON.ContactMaterial(
+    const propellerContactMaterial = new CANNON.ContactMaterial(
       this.meshes.propeller.body.material,
       mesh.body.material,
       { friction: 0, restitution: .3 }
     );
 
 
-    this.world.addContactMaterial(matp);
+    this.world.addContactMaterial(propellerContactMaterial);
 
     if (this.celing) {
-      const matp1 = new CANNON.ContactMaterial(
+      const ceilingContactMaterial = new CANNON.ContactMaterial(
         this.celing.body.material,
         mesh.body.material,
         { friction: 0, restitution: 0 }
       );
 
-      this.world.addContactMaterial(matp1);
+      this.world.addContactMaterial(ceilingContactMaterial);
     }
 
     mesh.body.addEventListener('collide', (event) => {
