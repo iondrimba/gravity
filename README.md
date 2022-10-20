@@ -2,7 +2,7 @@
 
 Playing with Threejs and Cannonjs
 
-![Image Title](https://raw.githubusercontent.com/iondrimba/images/master/gravity.png)
+![gravity](https://user-images.githubusercontent.com/178548/197077150-e442d6ae-d93c-490b-98d2-b8e6c40e0bc7.gif)
 
 ## [Demo](https://iondrimba.github.io/gravity/public/index.html)
 
