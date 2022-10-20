@@ -67,11 +67,11 @@ class App {
     });
 
     this.guiSettings.addInput(this.settings.colors.spheres, 'left').on('change', (evt) => {
-      this.meshes.sphereLeftSideMaterial.color = hexToRgb(evt.value);
+      this.spheres.materials.left.color = hexToRgb(evt.value);
     });
 
     this.guiSettings.addInput(this.settings.colors.spheres, 'right').on('change', (evt) => {
-      this.meshes.sphereRightSideMaterial.color = hexToRgb(evt.value);
+      this.spheres.materials.right.color = hexToRgb(evt.value);
     });
 
     this.guiSettings.addInput(this.settings.colors, 'box').on('change', (evt) => {
@@ -151,13 +151,12 @@ class App {
   }
 
   setup() {
-    this.sphereConfig = {
-      radius: .15,
-      width: 32,
-      height: 32,
-    }
-
     this.spheres = {
+      config: {
+        radius: .15,
+        width: 32,
+        height: 32,
+      },
       materials: {
         base: new THREE.MeshBasicMaterial({ color: '#ff00ff' }),
         left: new THREE.MeshPhysicalMaterial({
@@ -185,22 +184,10 @@ class App {
         emissive: 0x0,
         roughness: 1,
       }),
-      sphereBaseMaterial: new THREE.MeshBasicMaterial({ color: '#ff00ff' }),
-      sphereLeftSideMaterial: new THREE.MeshPhysicalMaterial({
-        color: this.settings.colors.spheres.left,
-        metalness: .1,
-        emissive: 0x0,
-        roughness: .1,
-      }),
-      sphereRightSideMaterial: new THREE.MeshPhysicalMaterial({
-        color: this.settings.colors.spheres.right,
-        metalness: .1,
-        emissive: 0x0,
-        roughness: .2,
-      }),
-      sphereConfig: {
-        geometry: new THREE.SphereGeometry(this.sphereConfig.radius, 16, 16),
-        halfsphere: new THREE.SphereGeometry(this.sphereConfig.radius, 16, 16, 0, 3.15),
+      sphere: {
+        baseMaterial: new THREE.MeshBasicMaterial({ color: '#ff00ff' }),
+        geometry:new THREE.SphereGeometry(this.spheres.config.radius, 16, 16),
+        geometryHalf: new THREE.SphereGeometry(this.spheres.config.radius, 16, 16, 0, 3.15),
       }
     };
   }
@@ -501,8 +488,8 @@ class App {
 
   addSpheres(position) {
     const mesh = new THREE.Mesh(
-      this.meshes.sphereConfig.geometry,
-      this.meshes.sphereBaseMaterial,
+      this.meshes.sphere.geometry,
+      this.meshes.sphere.baseMaterial,
     );
 
     this.meshes.spheres.push(mesh);
@@ -514,11 +501,11 @@ class App {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
-    const leftSide = new THREE.Mesh(this.meshes.sphereConfig.halfsphere, this.meshes.sphereLeftSideMaterial);
+    const leftSide = new THREE.Mesh(this.meshes.sphere.geometryHalf, this.spheres.materials.left);
     leftSide.rotation.y = THREE.MathUtils.degToRad(-90);
     mesh.add(leftSide);
 
-    const rightSide = new THREE.Mesh(this.meshes.sphereConfig.halfsphere, this.meshes.sphereRightSideMaterial);
+    const rightSide = new THREE.Mesh(this.meshes.sphere.geometryHalf, this.spheres.materials.right);
     rightSide.rotation.y = THREE.MathUtils.degToRad(90);
 
     mesh.add(rightSide);
@@ -529,7 +516,7 @@ class App {
     mesh.body = new CANNON.Body({
       mass: 3,
       material: new CANNON.Material(),
-      shape: new CANNON.Sphere(this.sphereConfig.radius),
+      shape: new CANNON.Sphere(this.spheres.config.radius),
       position: new CANNON.Vec3(position.x, mesh.position.y, position.z),
       allowSleep: true,
     });
