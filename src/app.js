@@ -151,6 +151,7 @@ class App {
   }
 
   setup() {
+    this.lastTime = 0;
     this.spheres = {
       config: {
         radius: .15,
@@ -582,32 +583,42 @@ class App {
   }
 
   animate() {
+    var currentTime = Date.now();
     this.stats.begin();
     this.orbitControl.update();
 
-    this.meshes.spheres.forEach((sphere) => {
-      sphere.position.copy(sphere.body.position);
-      sphere.quaternion.copy(sphere.body.quaternion);
-    });
+    requestAnimationFrame(this.animate.bind(this));
 
-    const objectsWorldPosition = new THREE.Vector3();
-    this.meshes.propeller.getWorldPosition(objectsWorldPosition);
+    if (currentTime - this.lastTime > 1000 / 70) {
+      this.orbitControl.update();
 
-    const objectsWorldQuaternion = new THREE.Quaternion();
-    this.meshes.propeller.getWorldQuaternion(objectsWorldQuaternion);
+      this.debug && this.cannonDebugRenderer.update();
+      var dt = (currentTime - this.lastTime) / 1000;
+      this.world.step(1 / 60, dt, 3);
 
-    this.meshes.propeller.body.position.copy(objectsWorldPosition);
-    this.meshes.propeller.body.quaternion.copy(objectsWorldQuaternion);
 
-    this.meshes.container.rotation.y -= this.settings.velocity;
+      this.meshes.spheres.forEach((sphere) => {
+        sphere.position.copy(sphere.body.position);
+        sphere.quaternion.copy(sphere.body.quaternion);
+      });
+  
+      const objectsWorldPosition = new THREE.Vector3();
+      this.meshes.propeller.getWorldPosition(objectsWorldPosition);
+  
+      const objectsWorldQuaternion = new THREE.Quaternion();
+      this.meshes.propeller.getWorldQuaternion(objectsWorldQuaternion);
+  
+      this.meshes.propeller.body.position.copy(objectsWorldPosition);
+      this.meshes.propeller.body.quaternion.copy(objectsWorldQuaternion);
+  
+      this.meshes.container.rotation.y -= this.settings.velocity;
 
-    this.world.fixedStep();
+      this.lastTime = Date.now();
+    }
 
     this.renderer.render(this.scene, this.camera);
-
     this.stats.end();
 
-    requestAnimationFrame(this.animate.bind(this));
   }
 }
 
